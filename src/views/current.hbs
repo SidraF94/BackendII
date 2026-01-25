@@ -1,0 +1,17 @@
+<div class="header">
+    <h2>Usuario Actual</h2>
+    <a href="/users/logout" class="btn btn-logout">Cerrar Sesión</a>
+</div>
+
+<div class="welcome">
+    <h1>Bienvenido, {{user.first_name}} {{user.last_name}}</h1>
+    <p>Datos del usuario logueado</p>
+    <div class="user-info">
+        <div style="margin-top: 1rem;">
+            <strong>Nombre:</strong> {{user.first_name}} {{user.last_name}}<br>
+            <strong>Email:</strong> {{user.email}}<br>
+            <strong>Rol:</strong> {{user.role}}
+        </div>
+    </div>
+</div>
+

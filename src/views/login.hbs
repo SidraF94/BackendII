@@ -1,0 +1,46 @@
+<h1>Login</h1>
+
+{{#if error}}
+{{#if (isArray error)}}
+{{#each error}}
+<div class="error">{{this}}</div>
+{{/each}}
+{{else}}
+<div class="error">{{error}}</div>
+{{/if}}
+{{/if}}
+
+{{#if success}}
+{{#each success}}
+<div class="success">{{this}}</div>
+{{/each}}
+{{/if}}
+
+<form action="{{#if formAction}}{{formAction}}{{else}}/users/login{{/if}}" method="POST">
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    
+    <button type="submit">Iniciar Sesión</button>
+</form>
+
+{{#if githubEnabled}}
+<div style="margin-top: 1rem; text-align: center;">
+    <p style="margin: 0.5rem 0;">O</p>
+    <a href="/auth/github" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #24292e; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
+        Iniciar sesión con GitHub
+    </a>
+</div>
+{{/if}}
+
+{{#if showRegisterLink}}
+<div class="link" style="margin-top: 1rem;">
+    No tienes cuenta? <a href="/auth/register">Registrate aquí</a>
+</div>
+{{/if}}
