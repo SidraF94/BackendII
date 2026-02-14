@@ -1,0 +1,209 @@
+<div class="header">
+    <h2>Detalle del Ticket</h2>
+    <a href="/users/my-tickets" class="btn">Volver a Mis Compras</a>
+</div>
+
+<div class="ticket-detail-container">
+    <div class="ticket-info-section">
+        <h3>Información del Ticket</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">Código:</span>
+                <span class="value">{{ticket.code}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Estado:</span>
+                <span class="value ticket-status {{ticket.status}}">{{ticket.status}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Fecha de Compra:</span>
+                <span class="value">{{formatDate ticket.purchase_datetime}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Comprador:</span>
+                <span class="value">{{ticket.purchaser}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Total:</span>
+                <span class="value total-amount">{{ticket.amountFormatted}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="products-section">
+        <h3>Productos Comprados</h3>
+        {{#if ticket.products.length}}
+        <div class="products-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio Unit.</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each ticket.products}}
+                    <tr>
+                        <td>{{this.title}}</td>
+                        <td>${{this.price}}</td>
+                        <td>{{this.quantity}}</td>
+                        <td>${{this.subtotal}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Total</strong></td>
+                        <td><strong>{{ticket.amountFormatted}}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {{else}}
+        <p class="no-products">No hay productos en este ticket.</p>
+        {{/if}}
+    </div>
+</div>
+
+<style>
+.header .btn,
+.header .btn:visited {
+    color: white;
+    border: 2px solid white;
+    text-decoration: none;
+}
+
+.header .btn:hover {
+    background: white;
+    color: #2a2a2a;
+}
+
+.ticket-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.ticket-info-section,
+.products-section {
+    background: #3a3a3a;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.ticket-info-section h3,
+.products-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: white;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #555;
+    padding-bottom: 10px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-item .label {
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 600;
+}
+
+.info-item .value {
+    font-size: 1.1rem;
+    color: white;
+}
+
+.total-amount {
+    color: #28a745 !important;
+    font-weight: bold;
+    font-size: 1.5rem !important;
+}
+
+.ticket-status {
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.ticket-status.completed {
+    background: #28a745;
+    color: white;
+}
+
+.ticket-status.pending {
+    background: #ffc107;
+    color: #333;
+}
+
+.products-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background: #444;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    color: white;
+}
+
+th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: #ddd;
+}
+
+tbody tr {
+    border-bottom: 1px solid #555;
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: #333;
+}
+
+tfoot {
+    background: #444;
+}
+
+tfoot td {
+    font-size: 1.1rem;
+}
+
+.no-products {
+    color: #aaa;
+    text-align: center;
+    padding: 20px;
+}
+</style>

@@ -1,0 +1,156 @@
+<div class="cart-container">
+  <h2>Carrito de Compras</h2>
+  <a href="/products" class="back-link">← Continuar comprando</a>
+
+  {{#if cart}}
+    {{#if cart.products}}
+      <div class="cart-items">
+        {{#each cart.products}}
+          {{#if this.productId}}
+            <div class="cart-item">
+              <div class="cart-item-image">
+                {{#if this.productId.thumbnails}}
+                  <img src="/api/images/{{this.productId._id}}/0" alt="{{this.productId.title}}" onerror="this.style.display='none'">
+                {{else}}
+                  <div class="image-placeholder">Sin imagen</div>
+                {{/if}}
+              </div>
+
+              <div class="cart-item-info">
+                <h3>{{this.productId.title}}</h3>
+                <p class="cart-item-description">{{this.productId.description}}</p>
+                <p class="cart-item-category">Categoría: {{this.productId.category}}</p>
+              </div>
+
+              <div class="cart-item-details">
+                <p class="cart-item-price">${{this.productId.price}}</p>
+                <p class="cart-item-quantity">Cantidad: {{this.quantity}}</p>
+                <p class="cart-item-total">Total: ${{this.itemTotal}}</p>
+              </div>
+
+              <div class="cart-item-actions">
+                <button onclick="removeFromCart('{{../cart._id}}', '{{this.productId._id}}')" class="btn btn-danger">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          {{/if}}
+        {{/each}}
+      </div>
+
+      <div class="cart-summary">
+        <h3>Resumen del Carrito</h3>
+        <p><strong>Total de productos:</strong> {{cart.products.length}}</p>
+        <p class="cart-total"><strong>Total a pagar:</strong> ${{cart.total}}</p>
+        <div style="display: flex; gap: 10px; margin-top: 1rem;">
+          <button onclick="purchaseCart('{{cart._id}}')" class="btn btn-primary" style="flex: 1; background: #28a745; border-color: #28a745;">Finalizar Compra</button>
+          <button onclick="clearCart('{{cart._id}}')" class="btn btn-danger">Vaciar Carrito</button>
+        </div>
+      </div>
+    {{else}}
+      <div class="empty-cart">
+        <p>El carrito está vacío</p>
+        <a href="/products" class="btn btn-primary">Ir a Productos</a>
+      </div>
+    {{/if}}
+  {{else}}
+    <div class="error-message">
+      <p>Carrito no encontrado</p>
+    </div>
+  {{/if}}
+</div>
+
+<script>
+
+  async function removeFromCart(cartId, productId) {
+    try {
+      const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.status === 401) {
+        alert('Debes iniciar sesión para realizar esta acción');
+        window.location.href = '/users/login';
+        return;
+      }
+
+      if (response.ok) {
+        alert('Producto eliminado del carrito');
+        location.reload();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + (errorData.error || 'Error al eliminar producto'));
+      }
+    } catch (error) {
+      alert('Error al eliminar producto: ' + error.message);
+    }
+  }
+
+  async function clearCart(cartId) {
+    if (!confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/carts/${cartId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.status === 401) {
+        alert('Debes iniciar sesión para realizar esta acción');
+        window.location.href = '/users/login';
+        return;
+      }
+
+      if (response.ok) {
+        alert('Carrito vaciado');
+        sessionStorage.removeItem('cartId');
+        location.reload();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + (errorData.error || 'Error al vaciar carrito'));
+      }
+    } catch (error) {
+      alert('Error al vaciar carrito: ' + error.message);
+    }
+  }
+
+  async function purchaseCart(cartId) {
+    if (!confirm('¿Deseas finalizar la compra?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/carts/${cartId}/purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 401) {
+        alert('Debes iniciar sesión para finalizar la compra');
+        window.location.href = '/users/login';
+        return;
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        let message = `¡Compra realizada exitosamente!\n\nTicket: ${data.ticket.code}\nTotal: $${data.ticket.amount}\n\nProductos comprados: ${data.purchasedProducts.length}`;
+        
+        if (data.unavailableProducts && data.unavailableProducts.length > 0) {
+          message += `\n\nAdvertencia: ${data.unavailableProducts.length} producto(s) no tenían stock suficiente y quedaron en el carrito.`;
+        }
+        
+        alert(message);
+        sessionStorage.removeItem('cartId');
+        window.location.href = '/products';
+      } else {
+        alert('Error: ' + (data.message || data.error || 'Error al procesar la compra'));
+      }
+    } catch (error) {
+      alert('Error al procesar la compra: ' + error.message);
+    }
+  }
+</script>

@@ -1,15 +1,23 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import passport from './config/passport.js';
 import { engine } from 'express-handlebars';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import userRouter from './routes/userRouter.js';
 import viewsRouter from './routes/viewsRouter.js';
-import sessionsRouter from './routes/sessionsRouter.js';
+import productsRouter from './routes/productsRouter.js';
+import cartsRouter from './routes/cartsRouter.js';
+import imagesRouter from './routes/imagesRouter.js';
+import ticketsRouter from './routes/ticketsRouter.js';
+import { errorHandler } from './utils/errorHandler.js';
+import ProductService from './services/ProductService.js';
 
 
 // Cargar variables de entorno
@@ -34,6 +42,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
 
 // Configurar Handlebars
 app.engine('hbs', engine({
@@ -42,7 +52,18 @@ app.engine('hbs', engine({
     layoutsDir: join(__dirname, 'views', 'layouts'),
     helpers: {
         eq: (a, b) => a === b,
-        isArray: (value) => Array.isArray(value)
+        isArray: (value) => Array.isArray(value),
+        formatDate: (date) => {
+            if (!date) return 'N/A';
+            const d = new Date(date);
+            return d.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
     }
 }));
 app.set('view engine', 'hbs');
@@ -72,32 +93,87 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Ruta raíz redirige a login
-app.get('/', (req, res) => {
-    if (req.user) {
-        return res.redirect('/users/current');
-    }
-    res.redirect('/users/login');
+// Middleware para Socket.IO - debe estar antes de las rutas que lo necesitan
+app.use((req, res, next) => {
+    req.io = io;
+    next();
 });
+
+// Middleware para pasar información de autenticación a las vistas
+app.use((req, res, next) => {
+    try {
+        const token = req.signedCookies?.currentUser;
+        if (token) {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            res.locals.isAuthenticated = true;
+            res.locals.userId = decoded.id;
+            res.locals.userRole = decoded.role;
+        } else {
+            res.locals.isAuthenticated = false;
+        }
+    } catch (error) {
+        res.locals.isAuthenticated = false;
+    }
+    next();
+});
+
+// Rutas de vistas (home, products, carritos) - Deben ir primero
+app.use('/', viewsRouter);
 
 // Rutas de usuarios
 // /api/users - Servicios API con JWT
 app.use('/api/users', userRouter);
 
-// /api/sessions - Rutas de sesiones (login y current)
-app.use('/api/sessions', sessionsRouter);
-
 // /users - Vistas con Handlebars
 app.use('/users', viewsRouter);
 
-// Conexión a MongoDB
-let uri = process.env.MONGODB_URI;
+// Rutas de productos y carritos
+// /api/products - Servicios API de productos
+app.use('/api/products', productsRouter);
 
-if (uri.includes('mongodb+srv://')) {
-    uri = uri.replace(/\/[^\/\?]+(\?|$)/, '/integrative_practice$1');
-} else if (uri.includes('mongodb://')) {
-    uri = uri.replace(/\/[^\/\?]+(\?|$)/, '/integrative_practice$1');
-}
+// /api/carts - Servicios API de carritos
+app.use('/api/carts', cartsRouter);
+
+// /api/tickets - Servicios API de tickets/compras
+app.use('/api/tickets', ticketsRouter);
+
+// /api/images - Servir imágenes de productos
+app.use('/api/images', imagesRouter);
+
+// Middleware de manejo de errores (DEBE IR AL FINAL de todas las rutas)
+app.use(errorHandler);
+
+// Configuración de Socket.IO para productos en tiempo real
+io.on("connection", (socket) => {
+    console.log("Cliente conectado a Socket.IO");
+
+    socket.on("newProduct", async (productData) => {
+        try {
+            // Usar ProductService (que usa Repository y DTO)
+            const product = await ProductService.createProduct(productData, 'admin');
+            io.emit("productAdded", product);
+        } catch (error) {
+            socket.emit("error", { message: error.message || "Error al agregar producto" });
+        }
+    });
+
+    socket.on("deleteProduct", async (productId) => {
+        try {
+            // Usar ProductService (que usa Repository)
+            await ProductService.deleteProduct(productId, 'admin');
+            io.emit("productDeleted", productId);
+        } catch (error) {
+            socket.emit("error", { message: error.message || "Error al eliminar producto" });
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Cliente desconectado de Socket.IO");
+    });
+});
+
+// Conexión a MongoDB
+const uri = process.env.MONGODB_URI;
 
 mongoose.connection.on('error', (error) => {
     console.error('Error de conexión a MongoDB:', error.message);
@@ -106,8 +182,8 @@ mongoose.connection.on('error', (error) => {
 
 mongoose.connection.once('connected', () => {
     console.log('Conectado a MongoDB');
-const PORT = 8080;
-app.listen(PORT, () => {
+    const PORT = 8080;
+    httpServer.listen(PORT, () => {
         console.log(`Servidor corriendo en el puerto ${PORT}`);
     });
 });

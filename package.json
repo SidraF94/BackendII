@@ -20,10 +20,14 @@
     "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^7.5.2",
+    "mongoose-paginate-v2": "^1.9.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.0",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-jwt": "^4.0.1",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.6",

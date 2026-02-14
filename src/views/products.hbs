@@ -1,0 +1,161 @@
+<div class="products-container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Lista de Productos</h2>
+    <button id="viewCartBtn" onclick="viewCart()" class="btn btn-cart" style="display: none;">
+      Ver Carrito
+    </button>
+  </div>
+
+  <!-- Filtros y orden -->
+  <div class="filters-container">
+    <form method="GET" action="/products" class="filters-form">
+      <div class="filter-group">
+        <label for="query">Buscar por categoría o disponibilidad:</label>
+        <input type="text" id="query" name="query" value="{{pagination.query}}" placeholder="Ej: Pastas, Aderezos">
+      </div>
+      
+      <div class="filter-group">
+        <label for="sort">Ordenar por precio:</label>
+        <select id="sort" name="sort">
+          <option value="">Sin ordenar</option>
+          <option value="asc" {{#if (eq pagination.sort 'asc')}}selected{{/if}}>Menor a Mayor</option>
+          <option value="desc" {{#if (eq pagination.sort 'desc')}}selected{{/if}}>Mayor a Menor</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="limit">Productos por página:</label>
+        <select id="limit" name="limit">
+          <option value="5" {{#if (eq pagination.limit 5)}}selected{{/if}}>5</option>
+          <option value="10" {{#if (eq pagination.limit 10)}}selected{{/if}}>10</option>
+          <option value="20" {{#if (eq pagination.limit 20)}}selected{{/if}}>20</option>
+        </select>
+      </div>
+
+      <button type="submit">Aplicar Filtros</button>
+    </form>
+  </div>
+
+  <!-- Lista de productos -->
+  {{#if products}}
+    <div class="products-grid">
+      {{#each products}}
+        <div class="product-card">
+          {{#if this.thumbnails}}
+            {{#if this.thumbnails.length}}
+              <div class="product-image-container">
+                <img src="/api/images/{{this._id}}/0" alt="{{this.title}}" class="product-image active" onerror="this.style.display='none'">
+              </div>
+            {{else}}
+              <div class="product-image-placeholder">Sin imagen</div>
+            {{/if}}
+          {{else}}
+            <div class="product-image-placeholder">Sin imagen</div>
+          {{/if}}
+          
+          <h3>{{this.title}}</h3>
+          <p class="product-price">${{this.price}}</p>
+          <p class="product-stock">Stock: {{this.stock}}</p>
+          <p><strong>Categoría:</strong> {{this.category}}</p>
+          
+          <div class="product-actions">
+            <a href="/products/{{this._id}}" class="btn btn-default">Ver Detalles</a>
+            <button onclick="addToCart('{{this._id}}')" class="btn btn-default">Agregar al Carrito</button>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <p>No hay productos disponibles</p>
+    </div>
+  {{/if}}
+
+  <!-- Paginación -->
+  {{#if pagination}}
+    <div class="pagination">
+      {{#if pagination.hasPrevPage}}
+        <a href="{{pagination.prevLink}}" class="btn btn-secondary">← Anterior</a>
+      {{else}}
+        <span class="btn btn-secondary disabled">← Anterior</span>
+      {{/if}}
+
+      <span class="page-info">
+        Página {{pagination.page}} de {{pagination.totalPages}}
+      </span>
+
+      {{#if pagination.hasNextPage}}
+        <a href="{{pagination.nextLink}}" class="btn btn-secondary">Siguiente →</a>
+      {{else}}
+        <span class="btn btn-secondary disabled">Siguiente →</span>
+      {{/if}}
+    </div>
+  {{/if}}
+</div>
+
+<script>
+  // Mostrar/ocultar botón de carrito según sessionStorage
+  function updateCartButton() {
+    const cartId = sessionStorage.getItem('cartId');
+    const viewCartBtn = document.getElementById('viewCartBtn');
+    if (viewCartBtn) {
+      viewCartBtn.style.display = cartId ? 'block' : 'none';
+    }
+  }
+
+  function viewCart() {
+    const cartId = sessionStorage.getItem('cartId');
+    if (cartId) {
+      window.location.href = `/carts/${cartId}`;
+    }
+  }
+
+  // Verificar al cargar la página
+  document.addEventListener('DOMContentLoaded', updateCartButton);
+
+  async function addToCart(productId) {
+    try {
+      let cartId = sessionStorage.getItem('cartId');
+
+      if (!cartId) {
+        const createCartResponse = await fetch('/api/carts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!createCartResponse.ok) {
+          const errorData = await createCartResponse.json();
+          throw new Error(errorData.error || 'Error al crear carrito');
+        }
+
+        const newCart = await createCartResponse.json();
+        cartId = newCart.data._id;
+        sessionStorage.setItem('cartId', cartId);
+      }
+      
+      const addResponse = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ quantity: 1 })
+      });
+
+      if (addResponse.ok) {
+        alert('Producto agregado al carrito!');
+        updateCartButton(); // Actualizar visibilidad del botón
+      } else if (addResponse.status === 401) {
+        alert('Debes iniciar sesión para agregar productos al carrito');
+        window.location.href = '/users/login';
+        return;
+      } else {
+        const errorData = await addResponse.json();
+        throw new Error(errorData.error || 'Error al agregar producto al carrito');
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  }
+</script>

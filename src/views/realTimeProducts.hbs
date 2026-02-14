@@ -1,0 +1,200 @@
+<h2>Productos en Tiempo Real</h2>
+
+<div class="form-section">
+    <h3>Agregar Nuevo Producto</h3>
+    <form id="productForm" enctype="multipart/form-data" class="form-container">
+        <div class="form-group">
+            <label for="title">Título:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Descripción:</label>
+            <textarea id="description" name="description" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="code">Código:</label>
+            <input type="text" id="code" name="code" required>
+        </div>
+        <div class="form-group">
+            <label for="price">Precio:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" required>
+        </div>
+        <div class="form-group">
+            <label for="category">Categoría:</label>
+            <input type="text" id="category" name="category" required>
+        </div>
+        <div class="form-group">
+            <label for="status">Estado:</label>
+            <select id="status" name="status" required>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="thumbnails">Imágenes (máx. 5):</label>
+            <input type="file" id="thumbnails" name="thumbnails" accept="image/*" multiple>
+            <small>Puedes seleccionar hasta 5 imágenes</small>
+        </div>
+        <button type="submit">Agregar Producto</button>
+    </form>
+</div>
+
+<div>
+    <h3>Lista de Productos</h3>
+    <div id="productsList" class="products-grid">
+        {{#each products}}
+        <div class="product-card" data-id="{{this._id}}">
+            {{#if this.thumbnails}}
+                <div class="product-image-container" data-product-id="{{this._id}}">
+                    {{#each this.thumbnails}}
+                        <img src="/api/images/{{../_id}}/{{@index}}" alt="{{../title}}" class="product-image {{#if @first}}active{{/if}}" data-product-id="{{../_id}}" onerror="this.style.display='none'">
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="product-image-placeholder">Imagen no disponible</div>
+            {{/if}}
+            <h3>{{this.title}}</h3>
+            <p><strong>Descripción:</strong> {{this.description}}</p>
+            <p><strong>Código:</strong> {{this.code}}</p>
+            <p class="product-price">${{this.price}}</p>
+            <p class="product-stock">Stock: {{this.stock}}</p>
+            <p><strong>Categoría:</strong> {{this.category}}</p>
+            <p><strong>Estado:</strong> {{#if this.status}}Activo{{else}}Inactivo{{/if}}</p>
+            <p><strong>ID:</strong> {{this._id}}</p>
+            <button class="delete" onclick="deleteProduct('{{this._id}}')">Eliminar</button>
+        </div>
+        {{/each}}
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    socket.on("connect", () => {
+    });
+    
+    function startImageCarousel(productId) {
+        const container = document.querySelector(`.product-image-container[data-product-id="${productId}"]`);
+        if (!container) return;
+        
+        const images = container.querySelectorAll('.product-image');
+        if (images.length <= 1) return;
+        
+        let currentIndex = 0;
+        
+        setInterval(() => {
+            images[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % images.length;
+            images[currentIndex].classList.add('active');
+        }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const allContainers = document.querySelectorAll('.product-image-container');
+        allContainers.forEach(container => {
+            const productId = container.getAttribute('data-product-id');
+            if (productId) {
+                startImageCarousel(productId);
+            }
+        });
+    });
+
+    function renderImages(thumbnails, productId) {
+        if (!thumbnails || thumbnails.length === 0) {
+            return '<div class="product-image-placeholder">Imagen no disponible</div>';
+        }
+        const imagesHtml = thumbnails.map((img, index) => 
+            `<img src="/api/images/${productId}/${index}" alt="Producto" class="product-image ${index === 0 ? 'active' : ''}" data-product-id="${productId}" onerror="this.style.display='none'">`
+        ).join('');
+        return `<div class="product-image-container" data-product-id="${productId}">${imagesHtml}</div>`;
+    }
+
+    function createProductCard(product) {
+        return `
+            <div class="product-card" data-id="${product._id}">
+                ${renderImages(product.thumbnails, product._id)}
+                <h3>${product.title}</h3>
+                <p><strong>Descripción:</strong> ${product.description}</p>
+                <p><strong>Código:</strong> ${product.code}</p>
+                <p class="product-price">$${product.price}</p>
+                <p class="product-stock">Stock: ${product.stock}</p>
+                <p><strong>Categoría:</strong> ${product.category}</p>
+                <p><strong>Estado:</strong> ${product.status ? 'Activo' : 'Inactivo'}</p>
+                <p><strong>ID:</strong> ${product._id}</p>
+                <button class="delete" onclick="deleteProduct('${product._id}')">Eliminar</button>
+            </div>
+        `;
+    }
+
+    socket.on("productAdded", (product) => {
+        const productsList = document.getElementById("productsList");
+        productsList.insertAdjacentHTML("beforeend", createProductCard(product));
+        startImageCarousel(product._id);
+    });
+
+    socket.on("productDeleted", (productId) => {
+        const productCard = document.querySelector(`[data-id="${productId}"]`);
+        if (productCard) {
+            productCard.remove();
+        }
+    });
+
+    socket.on("productUpdated", (product) => {
+        const productCard = document.querySelector(`[data-id="${product._id}"]`);
+        if (productCard) {
+            productCard.outerHTML = createProductCard(product);
+            startImageCarousel(product._id);
+        }
+    });
+
+    document.getElementById("productForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        
+        try {
+            const response = await fetch("/api/products", {
+                method: "POST",
+                credentials: 'include', // Enviar cookies con la petición
+                body: formData
+            });
+
+            if (response.ok) {
+                e.target.reset();
+                alert("Producto agregado correctamente");
+            } else {
+                const errorData = await response.json();
+                alert(`Error al agregar producto: ${errorData.error || errorData.message || 'Error desconocido'}`);
+            }
+        } catch (err) {
+            alert("Error al agregar producto");
+            console.error(err);
+        }
+    });
+
+    async function deleteProduct(id) {
+        if (!confirm("¿Seguro que querés eliminar este producto?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/products/${id}`, {
+                method: "DELETE",
+                credentials: 'include' // Enviar cookies con la petición
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Error al eliminar producto: ${errorData.error || errorData.message || 'Error desconocido'}`);
+            }
+        } catch (err) {
+            alert("Error al eliminar producto");
+            console.error(err);
+        }
+    }
+</script>

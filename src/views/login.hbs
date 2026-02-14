@@ -1,3 +1,4 @@
+<div class="auth-form-container">
 <h1>Login</h1>
 
 {{#if error}}
@@ -30,6 +31,10 @@
     <button type="submit">Iniciar Sesión</button>
 </form>
 
+<div class="link" style="margin-top: 1rem;">
+    <a href="/users/forgot-password">¿Olvidaste tu contraseña?</a>
+</div>
+
 {{#if githubEnabled}}
 <div style="margin-top: 1rem; text-align: center;">
     <p style="margin: 0.5rem 0;">O</p>
@@ -41,6 +46,7 @@
 
 {{#if showRegisterLink}}
 <div class="link" style="margin-top: 1rem;">
-    No tienes cuenta? <a href="/auth/register">Registrate aquí</a>
+    No tienes cuenta? <a href="/users/register">Registrate aquí</a>
 </div>
 {{/if}}
+</div>

@@ -1,17 +1,193 @@
-<div class="header">
-    <h2>Usuario Actual</h2>
-    <a href="/users/logout" class="btn btn-logout">Cerrar Sesión</a>
-</div>
-
-<div class="welcome">
-    <h1>Bienvenido, {{user.first_name}} {{user.last_name}}</h1>
-    <p>Datos del usuario logueado</p>
-    <div class="user-info">
-        <div style="margin-top: 1rem;">
-            <strong>Nombre:</strong> {{user.first_name}} {{user.last_name}}<br>
-            <strong>Email:</strong> {{user.email}}<br>
-            <strong>Rol:</strong> {{user.role}}
-        </div>
+<section class="current-page">
+    <div class="current-header">
+        <h2>Usuario Actual</h2>
+        <a href="/users/logout" class="btn btn-logout">Cerrar Sesión</a>
     </div>
-</div>
+
+    <article class="profile-card">
+        <div class="profile-title">
+            <h1>Bienvenido, {{user.first_name}} {{user.last_name}}</h1>
+            <p>Resumen de tu cuenta</p>
+        </div>
+
+        <div class="profile-details">
+            <div class="detail-item">
+                <span class="label">Nombre</span>
+                <span class="value">{{user.first_name}} {{user.last_name}}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Email</span>
+                <span class="value">{{user.email}}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Rol</span>
+                <span class="value role-badge">{{user.role}}</span>
+            </div>
+        </div>
+
+        <div class="user-actions">
+            <a href="/users/my-tickets" class="btn btn-primary">Mis Compras</a>
+            <a href="/products" class="btn btn-secondary">Ver Productos</a>
+            {{#if (eq user.role "admin")}}
+            <a href="/realtimeproducts" class="btn btn-admin">Admin Panel</a>
+            {{/if}}
+        </div>
+    </article>
+</section>
+
+<style>
+.current-page {
+    max-width: 950px;
+    margin: 0 auto;
+}
+
+.current-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+}
+
+.btn-logout {
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+    background: #fff;
+    color: #2a2a2a;
+}
+
+.profile-card {
+    background: linear-gradient(135deg, #343a40, #2b2f33);
+    border: 1px solid #444;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.profile-title h1 {
+    margin-bottom: 6px;
+    font-size: 2rem;
+    text-align: left;
+}
+
+.profile-title p {
+    color: #bbb;
+    margin-bottom: 24px;
+}
+
+.profile-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+.detail-item {
+    background: #2a2a2a;
+    border: 1px solid #4a4a4a;
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    color: #a9b0b8;
+    font-size: 0.85rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.value {
+    color: #fff;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-self: flex-start;
+    background: #ffd166;
+    color: #1f1f1f;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+}
+
+.user-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-actions .btn {
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.user-actions .btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: #4c6ef5;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #3f5de0;
+}
+
+.btn-secondary {
+    background: #2f9e44;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: #2b8a3e;
+}
+
+.btn-admin {
+    background: #f59f00;
+    color: #222;
+}
+
+.btn-admin:hover {
+    background: #e58c00;
+}
+
+@media (max-width: 768px) {
+    .current-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-card {
+        padding: 20px;
+    }
+
+    .profile-title h1 {
+        font-size: 1.6rem;
+    }
+
+    .user-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
 

@@ -1,3 +1,4 @@
+<div class="auth-form-container">
 <h1>Registro de Usuario</h1>
 
 {{#if error}}
@@ -6,7 +7,7 @@
 {{/each}}
 {{/if}}
 
-<form action="/auth/register" method="POST" enctype="application/x-www-form-urlencoded">
+<form action="/users/register" method="POST" enctype="application/x-www-form-urlencoded">
     <div class="form-group">
         <label for="first_name">Nombre:</label>
         <input type="text" id="first_name" name="first_name" required>
@@ -36,6 +37,7 @@
 </form>
 
 <div class="link">
-    ¿Ya tienes cuenta? <a href="/auth/login">Inicia sesión aquí</a>
+    ¿Ya tienes cuenta? <a href="/users/login">Inicia sesión aquí</a>
+</div>
 </div>
 

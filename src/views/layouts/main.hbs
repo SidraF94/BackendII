@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="{{#if isProducts}}wider{{/if}}">
+    <nav class="top-nav">
+        <a href="/products" class="nav-link">Productos</a>
+        <div id="authButtons">
+            {{#if isAuthenticated}}
+                <a href="/users/current" class="nav-link">Mi Perfil</a>
+                <a href="/users/logout" class="nav-link logout">Cerrar Sesión</a>
+            {{else}}
+                <a href="/users/register" class="nav-link">Registro</a>
+                <a href="/users/login" class="nav-link">Iniciar Sesión</a>
+            {{/if}}
+        </div>
+    </nav>
+    
     <div class="container">
         {{{body}}}
     </div>

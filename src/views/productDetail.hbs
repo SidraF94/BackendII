@@ -1,0 +1,94 @@
+<div class="product-detail-container">
+  <a href="/products" class="back-link">← Volver a productos</a>
+
+  {{#if product}}
+    <div class="product-detail">
+      <div class="product-images">
+        {{#if product.thumbnails}}
+          {{#each product.thumbnails}}
+            <img src="/api/images/{{../product._id}}/{{@index}}" alt="{{../product.title}}" class="product-detail-image" onerror="this.style.display='none'">
+          {{/each}}
+        {{else}}
+          <div class="product-image-placeholder large">Sin imagen</div>
+        {{/if}}
+      </div>
+
+      <div class="product-info">
+        <h1>{{product.title}}</h1>
+        <p class="product-description">{{product.description}}</p>
+        
+        <div class="product-details">
+          <p class="product-price-large">${{product.price}}</p>
+          <p><strong>Stock disponible:</strong> {{product.stock}}</p>
+          <p><strong>Categoría:</strong> {{product.category}}</p>
+          <p><strong>Estado:</strong> 
+            {{#if product.status}}
+              <span class="status-available">Disponible</span>
+            {{else}}
+              <span class="status-unavailable">No disponible</span>
+            {{/if}}
+          </p>
+          <p><strong>Código:</strong> {{product.code}}</p>
+        </div>
+
+        <div class="product-actions">
+          <button onclick="addToCart('{{product._id}}')" class="btn btn-default btn-large" {{#unless product.status}}disabled{{/unless}}>
+            Agregar al Carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    <div class="error-message">
+      <p>Producto no encontrado</p>
+    </div>
+  {{/if}}
+</div>
+
+<script>
+  async function addToCart(productId) {
+    try {
+      let cartId = sessionStorage.getItem('cartId');
+
+      if (!cartId) {
+        const createCartResponse = await fetch('/api/carts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!createCartResponse.ok) {
+          const errorData = await createCartResponse.json();
+          throw new Error(errorData.error || 'Error al crear carrito');
+        }
+        
+        const newCart = await createCartResponse.json();
+        cartId = newCart.data._id;
+        sessionStorage.setItem('cartId', cartId);
+      }
+      
+      const addResponse = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ quantity: 1 })
+      });
+
+      if (addResponse.ok) {
+        alert('Producto agregado al carrito!');
+        window.location.href = `/carts/${cartId}`;
+      } else if (addResponse.status === 401) {
+        alert('Debes iniciar sesión para agregar productos al carrito');
+        window.location.href = '/users/login';
+        return;
+      } else {
+        const errorData = await addResponse.json();
+        throw new Error(errorData.error || 'Error al agregar producto al carrito');
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  }
+</script>
