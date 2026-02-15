@@ -56,7 +56,7 @@ const ticketSchema = new mongoose.Schema({
 // Generar código único para el ticket
 ticketSchema.pre('save', async function(next) {
   if (!this.code) {
-    this.code = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    this.code = `TICKET-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
   }
   next();
 });

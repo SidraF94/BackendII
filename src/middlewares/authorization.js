@@ -54,7 +54,6 @@ export const redirectIfAuthenticated = (req, res, next) => {
     
     next();
   } catch (error) {
-    // Si el token es inválido, continuar (no está autenticado)
     next();
   }
 };
@@ -81,7 +80,7 @@ export const requireAdmin = (req, res, next) => {
 };
 
 /**
- * Middleware para verificar que el usuario sea user (no admin)
+ * Middleware para verificar que el usuario sea user
  */
 export const requireUser = (req, res, next) => {
   if (!req.user) {
@@ -125,7 +124,7 @@ export const requireRole = (...roles) => {
 };
 
 /**
- * Middleware para verificar que el usuario sea el propietario del recurso o admin
+ * Middleware para verificar que el usuario sea admin
  */
 export const requireOwnerOrAdmin = (resourceOwnerField = 'userId') => {
   return (req, res, next) => {

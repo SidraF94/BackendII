@@ -63,7 +63,24 @@ class ProductController {
 
   // POST /api/products (Solo Admin)
   createProduct = catchAsync(async (req, res) => {
-    const product = await ProductService.createProduct(req.body, req.user.role);
+    const productData = {
+      ...req.body,
+      price: req.body.price !== undefined ? Number(req.body.price) : req.body.price,
+      stock: req.body.stock !== undefined ? Number(req.body.stock) : req.body.stock,
+      status: req.body.status !== undefined
+        ? req.body.status === 'true' || req.body.status === true
+        : true
+    };
+
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      productData.thumbnails = req.files.map((file) => ({
+        data: file.buffer.toString('base64'),
+        contentType: file.mimetype,
+        filename: file.originalname
+      }));
+    }
+
+    const product = await ProductService.createProduct(productData, req.user.role);
     
     // Emitir evento Socket.IO
     if (req.io) {

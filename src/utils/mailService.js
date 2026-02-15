@@ -66,7 +66,7 @@ class MailService {
               <p class="warning">⚠️ Este enlace expirará en 1 hora por seguridad.</p>
               <p>Si tienes problemas, contacta con soporte.</p>
               <br>
-              <p>Saludos,<br>El equipo de soporte</p>
+              <p>Saludos,<br>Fernando Sidra</p>
             </div>
           </div>
         </body>
@@ -163,7 +163,7 @@ class MailService {
               
               <p>Guarda este correo como comprobante de tu compra.</p>
               <br>
-              <p>Saludos,<br>El equipo de ventas</p>
+              <p>Saludos,<br>Fernando Sidra</p>
             </div>
           </div>
         </body>

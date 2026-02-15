@@ -75,7 +75,8 @@ class CartController {
 
   // DELETE /api/carts/:id
   clearCart = catchAsync(async (req, res) => {
-    const cart = await CartService.clearCart(req.params.id);
+    const cartId = req.params.cid || req.params.id;
+    const cart = await CartService.clearCart(cartId);
     
     res.json({
       status: 'success',

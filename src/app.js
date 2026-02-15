@@ -117,29 +117,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// Rutas de vistas (home, products, carritos) - Deben ir primero
 app.use('/', viewsRouter);
-
-// Rutas de usuarios
-// /api/users - Servicios API con JWT
 app.use('/api/users', userRouter);
-
-// /users - Vistas con Handlebars
 app.use('/users', viewsRouter);
-
-// Rutas de productos y carritos
-// /api/products - Servicios API de productos
 app.use('/api/products', productsRouter);
-
-// /api/carts - Servicios API de carritos
 app.use('/api/carts', cartsRouter);
-
-// /api/tickets - Servicios API de tickets/compras
 app.use('/api/tickets', ticketsRouter);
-
-// /api/images - Servir imágenes de productos
 app.use('/api/images', imagesRouter);
-
 // Middleware de manejo de errores (DEBE IR AL FINAL de todas las rutas)
 app.use(errorHandler);
 

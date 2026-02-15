@@ -19,7 +19,6 @@ class UserService {
   }
 
   async register(userData) {
-    // Verificar si el usuario ya existe
     const existingUser = await UserRepository.getByEmail(userData.email);
     if (existingUser) {
       throw new Error('El email ya está registrado');
@@ -28,7 +27,6 @@ class UserService {
     // Encriptar contraseña
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-    // Crear usuario
     const newUser = await UserRepository.create({
       ...userData,
       password: hashedPassword,
@@ -36,7 +34,6 @@ class UserService {
       role: userData.role || 'user'
     });
 
-    // Generar JWT
     const token = this.generateToken(newUser);
 
     return {
@@ -46,19 +43,16 @@ class UserService {
   }
 
   async login(email, password) {
-    // Buscar usuario
     const user = await UserRepository.getByEmail(email);
     if (!user) {
       throw new Error('Credenciales inválidas');
     }
 
-    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       throw new Error('Credenciales inválidas');
     }
 
-    // Generar JWT
     const userDTO = new UserDTO(user);
     const token = this.generateToken(userDTO.toCurrent());
 
@@ -85,7 +79,6 @@ class UserService {
   async requestPasswordReset(email) {
     const user = await UserRepository.getByEmail(email);
     if (!user) {
-      // No revelar si el usuario existe o no por seguridad
       return { success: true, message: 'Si el email existe, recibirás instrucciones' };
     }
 
@@ -94,7 +87,7 @@ class UserService {
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     // Guardar token con expiración de 1 hora
-    const expiry = Date.now() + 3600000; // 1 hora
+    const expiry = Date.now() + 3600000;
     await UserRepository.saveResetToken(user._id, hashedToken, expiry);
 
     // Enviar email
@@ -103,19 +96,16 @@ class UserService {
       await mailService.sendResetPasswordEmail(email, resetUrl, user.first_name);
     } catch (error) {
       console.error('Error al enviar email:', error);
-      console.log('URL de recuperación (copia este enlace):', resetUrl);
       // No lanzar error, continuar el proceso
-      // throw new Error('Error al enviar email de recuperación');
     }
 
     return { success: true, message: 'Email de recuperación enviado' };
   }
 
   async resetPassword(token, newPassword) {
-    // Hashear token para comparar
+    // Hashear token para comparar si no no funciona
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    // Buscar usuario por token
     const user = await UserRepository.findByResetToken(hashedToken);
     if (!user) {
       throw new Error('Token inválido o expirado');
@@ -127,14 +117,11 @@ class UserService {
       throw new Error('No puedes usar la misma contraseña anterior');
     }
 
-    // Hashear nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar contraseña y guardar la anterior
     await UserRepository.updatePassword(user._id, hashedPassword);
     await UserRepository.update(user._id, { lastPassword: user.password });
 
-    // Limpiar token
     await UserRepository.clearResetToken(user._id);
 
     return { success: true, message: 'Contraseña actualizada correctamente' };

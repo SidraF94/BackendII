@@ -4,7 +4,6 @@ import ProductService from '../services/ProductService.js';
 import CartService from '../services/CartService.js';
 import UserService from '../services/UserService.js';
 import PurchaseService from '../services/PurchaseService.js';
-import UserRepository from '../repositories/UserRepository.js';
 
 const router = Router();
 

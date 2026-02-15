@@ -2,16 +2,10 @@ import CartRepository from '../repositories/CartRepository.js';
 import ProductRepository from '../repositories/ProductRepository.js';
 import TicketRepository from '../repositories/TicketRepository.js';
 import mailService from '../utils/mailService.js';
-import ProductDAO from '../daos/mongo/ProductDAO.js';
 
 class PurchaseService {
-  /**
-   * Procesar compra del carrito
-   * Verifica stock, actualiza inventario, genera ticket
-   * Maneja compras completas e incompletas
-   */
+  /* Procesa compra del carrito. Verifica stock, actualiza inventario, genera ticket. Maneja compras completas e incompletas.*/
   async purchaseCart(cartId, purchaserEmail) {
-    // Obtener carrito
     const cart = await CartRepository.getById(cartId);
     if (!cart) {
       throw new Error('Carrito no encontrado');
@@ -21,13 +15,11 @@ class PurchaseService {
       throw new Error('El carrito está vacío');
     }
 
-    // Obtener productos del carrito con stock actualizado
     const productsToProcess = await this.validateCartProducts(cart.products);
 
     // Separar productos con stock suficiente e insuficiente
     const { purchasableProducts, unavailableProducts } = await this.checkStockAvailability(productsToProcess);
 
-    // Si no hay productos con stock disponible
     if (purchasableProducts.length === 0) {
       return {
         success: false,
@@ -43,12 +35,11 @@ class PurchaseService {
 
     // Procesar compra y actualizar stock
     const processedProducts = await this.processProductsPurchase(purchasableProducts);
-
-    // Calcular monto total
+    
     const totalAmount = processedProducts.reduce((sum, item) => sum + item.subtotal, 0);
 
     // Generar código único para el ticket
-    const ticketCode = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const ticketCode = `TICKET-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
 
     // Crear ticket
     const ticketData = {
@@ -62,7 +53,6 @@ class PurchaseService {
 
     const ticket = await TicketRepository.create(ticketData);
 
-    // Actualizar carrito: eliminar productos comprados, mantener los no disponibles
     await this.updateCartAfterPurchase(cartId, purchasableProducts, unavailableProducts);
 
     // Enviar email de confirmación
@@ -70,10 +60,9 @@ class PurchaseService {
       await mailService.sendPurchaseConfirmation(purchaserEmail, ticket);
     } catch (error) {
       console.error('Error al enviar email de confirmación:', error);
-      // No lanzar error, la compra ya se procesó
+      // No lanzar error aca, la compra ya se proceso
     }
 
-    // Preparar respuesta
     const response = {
       success: true,
       ticket,
@@ -101,9 +90,7 @@ class PurchaseService {
     return response;
   }
 
-  /**
-   * Validar que todos los productos del carrito existan
-   */
+ 
   async validateCartProducts(cartProducts) {
     const validatedProducts = [];
 
@@ -124,9 +111,6 @@ class PurchaseService {
     return validatedProducts;
   }
 
-  /**
-   * Verificar stock disponible para cada producto
-   */
   async checkStockAvailability(products) {
     const purchasableProducts = [];
     const unavailableProducts = [];
@@ -142,17 +126,12 @@ class PurchaseService {
     return { purchasableProducts, unavailableProducts };
   }
 
-  /**
-   * Procesar compra: actualizar stock y preparar datos para ticket
-   **/
   async processProductsPurchase(purchasableProducts) {
     const processedProducts = [];
 
     for (const item of purchasableProducts) {
-      // Actualizar stock (restar cantidad)
       await ProductRepository.updateStock(item.productId, -item.quantity);
 
-      // Preparar datos para el ticket
       processedProducts.push({
         product: item.productId,
         title: item.product.title,
@@ -165,11 +144,8 @@ class PurchaseService {
     return processedProducts;
   }
 
-  /**
-   * Actualizar carrito después de la compra
-   */
+
   async updateCartAfterPurchase(cartId, purchasedProducts, unavailableProducts) {
-    // Si hay productos no disponibles, mantenerlos en el carrito
     if (unavailableProducts.length > 0) {
       // Eliminar solo los productos comprados
       for (const item of purchasedProducts) {
@@ -181,16 +157,11 @@ class PurchaseService {
     }
   }
 
-  /**
-   * Obtener tickets de un usuario
-   */
+ 
   async getUserTickets(email) {
     return await TicketRepository.getByPurchaser(email);
   }
 
-  /**
-   * Obtener ticket por ID
-   */
   async getTicketById(ticketId) {
     const ticket = await TicketRepository.getById(ticketId);
     if (!ticket) {
@@ -199,9 +170,6 @@ class PurchaseService {
     return ticket;
   }
 
-  /**
-   * Obtener ticket por código
-   */
   async getTicketByCode(code) {
     const ticket = await TicketRepository.getByCode(code);
     if (!ticket) {
@@ -210,9 +178,6 @@ class PurchaseService {
     return ticket;
   }
 
-  /**
-   * Obtener todos los tickets (solo admin)
-   */
   async getAllTickets(userRole) {
     if (userRole !== 'admin') {
       throw new Error('No tienes permisos para ver todos los tickets');
